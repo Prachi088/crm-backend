@@ -10,7 +10,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/notes")
-@CrossOrigin
+@CrossOrigin(origins = "*")
 public class NoteController {
 
     private final NoteService service;

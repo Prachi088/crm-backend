@@ -10,7 +10,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/leads")
-@CrossOrigin
+@CrossOrigin(origins = "*")
 public class LeadController {
 
     private final LeadService service;
