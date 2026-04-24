@@ -17,39 +17,55 @@ public class LeadService {
         this.repo = repo;
     }
 
-    // GET all leads
     public List<Lead> getAll() {
         return repo.findAll();
     }
 
-    // GET lead by ID
     public Lead getById(Long id) {
         return repo.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "Lead not found with ID: " + id));
     }
 
-    // POST - create new lead (ID is auto-generated, never set manually)
     public Lead save(Lead lead) {
-        lead.setId(null); // Force auto-increment — never allow manual ID on create
-        if (repo.existsByEmail(lead.getEmail())) {
+        lead.setId(null);
+
+        if (lead.getEmail() != null) {
+            lead.setEmail(lead.getEmail().trim().toLowerCase());
+        }
+
+        if (repo.existsByEmailIgnoreCase(lead.getEmail())) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT, "A lead with this email already exists.");
         }
+
         return repo.save(lead);
     }
 
-    // PUT - update existing lead by ID
     public Lead update(Long id, Lead updatedLead) {
-        Lead existing = getById(id); // throws 404 if not found
+        Lead existing = getById(id);
+
+        String newEmail = updatedLead.getEmail() != null
+                ? updatedLead.getEmail().trim().toLowerCase()
+                : null;
+
+        if (newEmail != null &&
+                !existing.getEmail().equalsIgnoreCase(newEmail) &&
+                repo.existsByEmailIgnoreCase(newEmail)) {
+
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT, "Another lead with this email already exists.");
+        }
+
         existing.setName(updatedLead.getName());
-        existing.setEmail(updatedLead.getEmail());
+        existing.setEmail(newEmail);
         existing.setCompany(updatedLead.getCompany());
         existing.setStatus(updatedLead.getStatus());
+        existing.setDealValue(updatedLead.getDealValue());
+
         return repo.save(existing);
     }
 
-    // DELETE by ID
     public void delete(Long id) {
         if (!repo.existsById(id)) {
             throw new ResponseStatusException(

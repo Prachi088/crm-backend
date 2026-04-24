@@ -10,11 +10,18 @@ public class Lead {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
     private String name;
+
+    @Column(nullable = false, unique = true)
     private String email;
+
     private String company;
+
+    @Column(nullable = false)
     private String status;
-    private Double dealValue;  // NEW FIELD
+
+    private Double dealValue;
 
     public Lead() {}
 
@@ -34,7 +41,9 @@ public class Lead {
     public void setName(String name) { this.name = name; }
 
     public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
+    public void setEmail(String email) {
+        this.email = email != null ? email.trim().toLowerCase() : null;
+    }
 
     public String getCompany() { return company; }
     public void setCompany(String company) { this.company = company; }

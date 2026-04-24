@@ -1,5 +1,7 @@
 package com.crm.crm_lite.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 
 @Entity
@@ -10,10 +12,14 @@ public class Note {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
     private String content;
 
+    // FIX: @JsonIgnoreProperties prevents lazy-load crash and avoids serializing
+    // the entire Lead object inside every Note response
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "lead_id", nullable = false)
+    @JsonIgnore   // ✅ THIS is the actual fix
     private Lead lead;
 
     public Note() {}

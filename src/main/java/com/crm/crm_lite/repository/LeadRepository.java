@@ -6,6 +6,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface LeadRepository extends JpaRepository<Lead, Long> {
-    // JpaRepository gives you: findAll, findById, save, deleteById — all built-in
-    boolean existsByEmail(String email); // Extra: check duplicate email
+    // FIX: case-insensitive check — prevents PRACHI@x.com vs prachi@x.com duplicates
+    boolean existsByEmailIgnoreCase(String email);
 }
