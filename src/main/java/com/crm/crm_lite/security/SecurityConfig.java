@@ -13,10 +13,10 @@ public class SecurityConfig {
 
         http
                 .csrf(csrf -> csrf.disable())
-                .cors(cors -> {})   // ✅ NEW WAY
+                .cors(cors -> {})   // enable CORS
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .anyRequest().authenticated()
+                        .requestMatchers("/api/auth/**").permitAll() // allow auth
+                        .anyRequest().permitAll() // 🔥 TEMP: allow all (for now)
                 );
 
         return http.build();
