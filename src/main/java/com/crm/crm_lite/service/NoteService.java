@@ -28,19 +28,10 @@ public class NoteService {
         return noteRepo.findByLeadId(leadId);
     }
 
+    // FIX: removed ownership check — any logged-in user can add a note to any lead
     @Transactional
     public Note addNote(Long leadId, String content, User currentUser) {
-        // FIX: use getByIdWithOwner so owner is eagerly loaded — was getById which lazy loaded owner as null
-        Lead lead = leadService.getByIdWithOwner(leadId);
-
-        // ── ownership check ──────────────────────────────────────
-        if (lead.getOwner() == null ||
-                !lead.getOwner().getId().equals(currentUser.getId())) {
-            throw new ResponseStatusException(
-                    HttpStatus.FORBIDDEN,
-                    "You are not the owner of this lead"
-            );
-        }
+        Lead lead = leadService.getById(leadId);
 
         Note note = new Note();
         note.setContent(content);
@@ -49,13 +40,34 @@ public class NoteService {
         return noteRepo.save(note);
     }
 
+    // FIX: new method — only note creator can edit their own note
+    @Transactional
+    public Note updateNote(Long noteId, String content, User currentUser) {
+        Note note = noteRepo.findById(noteId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Note not found"));
+
+        if (!note.getCreatedBy().getId().equals(currentUser.getId())) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN, "You cannot edit this note");
+        }
+
+        if (content == null || content.isBlank()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "Content cannot be empty");
+        }
+
+        note.setContent(content.trim());
+        return noteRepo.save(note);
+    }
+
+    // only note creator can delete
     @Transactional
     public void delete(Long noteId, User currentUser) {
         Note note = noteRepo.findById(noteId)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "Note not found"));
 
-        // only note creator can delete
         if (!note.getCreatedBy().getId().equals(currentUser.getId())) {
             throw new ResponseStatusException(
                     HttpStatus.FORBIDDEN, "You cannot delete this note");
@@ -63,7 +75,7 @@ public class NoteService {
         noteRepo.deleteById(noteId);
     }
 
-    public List<Note> getAll()          { return noteRepo.findAll(); }
+    public List<Note> getAll() { return noteRepo.findAll(); }
 
     public Note getById(Long id) {
         return noteRepo.findById(id)

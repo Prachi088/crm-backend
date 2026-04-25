@@ -22,7 +22,6 @@ public class NoteController {
         this.service = service;
     }
 
-    // helper — extracts User set by JwtFilter
     private User currentUser(Authentication auth) {
         if (auth == null || !(auth.getPrincipal() instanceof User)) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Not authenticated");
@@ -30,18 +29,18 @@ public class NoteController {
         return (User) auth.getPrincipal();
     }
 
-    // GET /api/notes/lead/{leadId}
+    // GET /api/notes/lead/{leadId} — public, no auth needed
     @GetMapping("/lead/{leadId}")
     public ResponseEntity<List<Note>> getByLeadId(@PathVariable Long leadId) {
         return ResponseEntity.ok(service.getByLeadId(leadId));
     }
 
-    // POST /api/notes/lead/{leadId}  ← owner only
+    // POST /api/notes/lead/{leadId} — any logged-in user can add a note
     @PostMapping("/lead/{leadId}")
     public ResponseEntity<Note> create(@PathVariable Long leadId,
                                        @RequestBody Map<String, String> body,
                                        Authentication auth) {
-        User user    = currentUser(auth);
+        User user = currentUser(auth);
         String content = body.get("content");
         if (content == null || content.isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Content is required");
@@ -50,7 +49,17 @@ public class NoteController {
                 .body(service.addNote(leadId, content, user));
     }
 
-    // DELETE /api/notes/{id}  ← note creator only
+    // PUT /api/notes/{id} — FIX: new endpoint, only note creator can edit
+    @PutMapping("/{id}")
+    public ResponseEntity<Note> update(@PathVariable Long id,
+                                       @RequestBody Map<String, String> body,
+                                       Authentication auth) {
+        User user = currentUser(auth);
+        String content = body.get("content");
+        return ResponseEntity.ok(service.updateNote(id, content, user));
+    }
+
+    // DELETE /api/notes/{id} — only note creator can delete
     @DeleteMapping("/{id}")
     public ResponseEntity<String> delete(@PathVariable Long id, Authentication auth) {
         service.delete(id, currentUser(auth));
