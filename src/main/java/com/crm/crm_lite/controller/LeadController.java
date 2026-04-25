@@ -47,4 +47,18 @@ public class LeadController {
         User user = currentUser(auth);
         return ResponseEntity.status(HttpStatus.CREATED).body(service.save(lead, user));
     }
+    @PutMapping("/{id}")
+    public ResponseEntity<Lead> update(@PathVariable Long id,
+                                       @RequestBody Lead lead,
+                                       Authentication auth) {
+        User user = currentUser(auth);
+        return ResponseEntity.ok(service.update(id, lead, user));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id, Authentication auth) {
+        User user = currentUser(auth);
+        service.delete(id, user);
+        return ResponseEntity.noContent().build();
+    }
 }

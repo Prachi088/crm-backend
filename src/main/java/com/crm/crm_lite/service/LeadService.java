@@ -37,22 +37,21 @@ public class LeadService {
 
     public Lead save(Lead lead, User owner) {
         lead.setId(null);
-        lead.setOwner(owner);   // ← assign ownership at creation
+        lead.setOwner(owner);
 
-        if (lead.getEmail() != null) {
+        if (lead.getEmail() != null && !lead.getEmail().isBlank()) {
             lead.setEmail(lead.getEmail().trim().toLowerCase());
-        }
-
-        if (repo.existsByEmailIgnoreCase(lead.getEmail())) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT, "A lead with this email already exists.");
+            if (repo.existsByEmailIgnoreCase(lead.getEmail())) {
+                throw new ResponseStatusException(
+                        HttpStatus.CONFLICT, "A lead with this email already exists.");
+            }
         }
 
         return repo.save(lead);
     }
 
     public Lead update(Long id, Lead updatedLead, User currentUser) {
-        Lead existing = getById(id);
+        Lead existing = getByIdWithOwner(id);
 
         // ── ownership check ──────────────────────────────────────
         if (existing.getOwner() == null ||
@@ -82,7 +81,7 @@ public class LeadService {
     }
 
     public void delete(Long id, User currentUser) {
-        Lead existing = getById(id);
+        Lead existing = getByIdWithOwner(id);
 
         // ── ownership check ──────────────────────────────────────
         if (existing.getOwner() == null ||
