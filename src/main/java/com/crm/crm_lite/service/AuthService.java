@@ -1,5 +1,6 @@
 package com.crm.crm_lite.service;
 
+import com.crm.crm_lite.dto.AuthResponse;
 import com.crm.crm_lite.model.User;
 import com.crm.crm_lite.repository.UserRepository;
 import com.crm.crm_lite.security.JwtUtil;
@@ -14,19 +15,22 @@ public class AuthService {
     private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
     public AuthService(UserRepository repo, JwtUtil jwtUtil) {
-        this.repo = repo;
+        this.repo    = repo;
         this.jwtUtil = jwtUtil;
     }
 
-    public String register(String email, String password) {
+    // FIX: now returns AuthResponse (token + userId + email) instead of just a token string.
+    // This lets the frontend store userId so it can compare with lead.owner.id.
+    public AuthResponse register(String email, String password) {
         User user = new User();
         user.setEmail(email);
         user.setPassword(encoder.encode(password));
         repo.save(user);
-        return jwtUtil.generateToken(email);
+        String token = jwtUtil.generateToken(email, user.getId());
+        return new AuthResponse(token, user.getId(), email);
     }
 
-    public String login(String email, String password) {
+    public AuthResponse login(String email, String password) {
         User user = repo.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -34,6 +38,7 @@ public class AuthService {
             throw new RuntimeException("Invalid password");
         }
 
-        return jwtUtil.generateToken(email);
+        String token = jwtUtil.generateToken(email, user.getId());
+        return new AuthResponse(token, user.getId(), email);
     }
 }
