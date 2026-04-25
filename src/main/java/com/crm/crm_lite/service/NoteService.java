@@ -29,7 +29,8 @@ public class NoteService {
 
     @Transactional
     public Note addNote(Long leadId, String content, User currentUser) {
-        Lead lead = leadService.getById(leadId);
+        // FIX: use getByIdWithOwner so owner is eagerly loaded — was getById which lazy loaded owner as null
+        Lead lead = leadService.getByIdWithOwner(leadId);
 
         // ── ownership check ──────────────────────────────────────
         if (lead.getOwner() == null ||

@@ -28,6 +28,13 @@ public class LeadService {
                         HttpStatus.NOT_FOUND, "Lead not found with ID: " + id));
     }
 
+    // FIX: new method that eagerly fetches owner — used by NoteService for ownership check
+    public Lead getByIdWithOwner(Long id) {
+        return repo.findByIdWithOwner(id)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Lead not found with ID: " + id));
+    }
+
     public Lead save(Lead lead, User owner) {
         lead.setId(null);
         lead.setOwner(owner);   // ← assign ownership at creation
