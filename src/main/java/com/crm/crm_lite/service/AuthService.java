@@ -31,11 +31,14 @@ public class AuthService {
     }
 
     public AuthResponse login(String email, String password) {
-        User user = repo.findByEmail(email.trim().toLowerCase())  // ← normalize
+        String normalizedEmail = email.trim().toLowerCase();
+        User user = repo.findByEmailIgnoreCase(normalizedEmail)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+
         if (!encoder.matches(password, user.getPassword())) {
             throw new RuntimeException("Invalid password");
         }
+
         String token = jwtUtil.generateToken(user.getEmail(), user.getId());
         return new AuthResponse(token, user.getId(), user.getEmail());
     }
