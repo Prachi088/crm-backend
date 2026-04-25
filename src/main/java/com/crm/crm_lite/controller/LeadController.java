@@ -1,22 +1,32 @@
 package com.crm.crm_lite.controller;
 
 import com.crm.crm_lite.model.Lead;
+import com.crm.crm_lite.model.User;
 import com.crm.crm_lite.service.LeadService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/leads")
-@CrossOrigin(origins = "*")
 public class LeadController {
 
     private final LeadService service;
 
     public LeadController(LeadService service) {
         this.service = service;
+    }
+
+    // helper — extracts User set by JwtFilter
+    private User currentUser(Authentication auth) {
+        if (auth == null || !(auth.getPrincipal() instanceof User)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Not authenticated");
+        }
+        return (User) auth.getPrincipal();
     }
 
     // GET /api/leads — Get all leads
@@ -31,22 +41,27 @@ public class LeadController {
         return ResponseEntity.ok(service.getById(id));
     }
 
-    // POST /api/leads — Create a new lead (ID is auto-generated)
+    // POST /api/leads — Create a new lead, owner = logged-in user
     @PostMapping
-    public ResponseEntity<Lead> create(@RequestBody Lead lead) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.save(lead));
+    public ResponseEntity<Lead> create(@RequestBody Lead lead, Authentication auth) {
+        User user = currentUser(auth);
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.save(lead, user));
     }
 
-    // PUT /api/leads/{id} — Update an existing lead by ID
+    // PUT /api/leads/{id} — Only owner can update
     @PutMapping("/{id}")
-    public ResponseEntity<Lead> update(@PathVariable Long id, @RequestBody Lead lead) {
-        return ResponseEntity.ok(service.update(id, lead));
+    public ResponseEntity<Lead> update(@PathVariable Long id,
+                                       @RequestBody Lead lead,
+                                       Authentication auth) {
+        User user = currentUser(auth);
+        return ResponseEntity.ok(service.update(id, lead, user));
     }
 
-    // DELETE /api/leads/{id} — Delete a lead by ID
+    // DELETE /api/leads/{id} — Only owner can delete
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> delete(@PathVariable Long id) {
-        service.delete(id);
+    public ResponseEntity<String> delete(@PathVariable Long id, Authentication auth) {
+        User user = currentUser(auth);
+        service.delete(id, user);
         return ResponseEntity.ok("Lead with ID " + id + " deleted successfully.");
     }
 }
