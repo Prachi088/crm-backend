@@ -19,7 +19,7 @@ public class LeadService {
     }
 
     public List<Lead> getAll() {
-        return repo.findAll();
+        return repo.findAllWithOwner(); // FIX: was repo.findAll() — lazy loading caused owner to be null in JSON
     }
 
     public Lead getById(Long id) {
