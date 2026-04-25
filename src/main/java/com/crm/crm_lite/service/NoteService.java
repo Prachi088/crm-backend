@@ -22,6 +22,7 @@ public class NoteService {
         this.leadService = leadService;
     }
 
+    @Transactional(readOnly = true)
     public List<Note> getByLeadId(Long leadId) {
         leadService.getById(leadId);
         return noteRepo.findByLeadId(leadId);

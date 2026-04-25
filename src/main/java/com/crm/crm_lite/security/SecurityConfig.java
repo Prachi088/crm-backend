@@ -3,6 +3,7 @@ package com.crm.crm_lite.security;
 import com.crm.crm_lite.config.CorsConfig;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
@@ -26,7 +27,12 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfig.corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
-                        .anyRequest().authenticated()          // 🔒 everything else needs JWT
+                        .requestMatchers("/health").permitAll()
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/leads", "/api/leads/**",
+                                "/api/notes/lead/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/chat").permitAll()
+                        .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 

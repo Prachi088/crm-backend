@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 @Getter
 @Entity
@@ -20,6 +21,7 @@ public class Note {
     private String content;
 
     @Column(updatable = false)
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime createdAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
