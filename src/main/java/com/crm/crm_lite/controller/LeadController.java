@@ -47,21 +47,4 @@ public class LeadController {
         User user = currentUser(auth);
         return ResponseEntity.status(HttpStatus.CREATED).body(service.save(lead, user));
     }
-
-    // PUT /api/leads/{id} — Only owner can update
-    @PutMapping("/{id}")
-    public ResponseEntity<Lead> update(@PathVariable Long id,
-                                       @RequestBody Lead lead,
-                                       Authentication auth) {
-        User user = currentUser(auth);
-        return ResponseEntity.ok(service.update(id, lead, user));
-    }
-
-    // DELETE /api/leads/{id} — Only owner can delete
-    @DeleteMapping("/{id}")
-    public ResponseEntity<String> delete(@PathVariable Long id, Authentication auth) {
-        User user = currentUser(auth);
-        service.delete(id, user);
-        return ResponseEntity.ok("Lead with ID " + id + " deleted successfully.");
-    }
 }
