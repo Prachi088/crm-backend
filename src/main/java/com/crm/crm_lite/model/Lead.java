@@ -1,7 +1,12 @@
 package com.crm.crm_lite.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
+import lombok.Getter;
 
+import java.time.LocalDateTime;
+
+@Getter
 @Entity
 @Table(name = "leads")
 public class Lead {
@@ -10,47 +15,35 @@ public class Lead {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
     private String name;
-
-    @Column(nullable = false, unique = true)
     private String email;
-
     private String company;
-
-    @Column(nullable = false)
+    private Double dealValue;
     private String status;
 
-    private Double dealValue;
+    @Column(updatable = false)
+    private LocalDateTime createdAt;
 
-    public Lead() {}
+    // ownership
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "owner_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "password"})
+    private User owner;
 
-    public Lead(Long id, String name, String email, String company, String status, Double dealValue) {
-        this.id = id;
-        this.name = name;
-        this.email = email;
-        this.company = company;
-        this.status = status;
-        this.dealValue = dealValue;
-    }
+    @PrePersist
+    protected void onCreate() { this.createdAt = LocalDateTime.now(); }
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public void setId(Long id)                { this.id = id; }
 
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
+    public void setName(String name)          { this.name = name; }
 
-    public String getEmail() { return email; }
-    public void setEmail(String email) {
-        this.email = email != null ? email.trim().toLowerCase() : null;
-    }
+    public void setEmail(String email)        { this.email = email; }
 
-    public String getCompany() { return company; }
-    public void setCompany(String company) { this.company = company; }
+    public void setCompany(String c)          { this.company = c; }
 
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public void setDealValue(Double d)        { this.dealValue = d; }
 
-    public Double getDealValue() { return dealValue; }
-    public void setDealValue(Double dealValue) { this.dealValue = dealValue; }
+    public void setStatus(String s)           { this.status = s; }
+
+    public void setOwner(User owner)          { this.owner = owner; }
 }

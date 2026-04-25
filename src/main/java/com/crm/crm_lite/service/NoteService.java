@@ -2,6 +2,7 @@ package com.crm.crm_lite.service;
 
 import com.crm.crm_lite.model.Lead;
 import com.crm.crm_lite.model.Note;
+import com.crm.crm_lite.model.User;
 import com.crm.crm_lite.repository.NoteRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -17,19 +18,8 @@ public class NoteService {
     private final LeadService leadService;
 
     public NoteService(NoteRepository noteRepo, LeadService leadService) {
-        this.noteRepo = noteRepo;
+        this.noteRepo    = noteRepo;
         this.leadService = leadService;
-    }
-
-    @Transactional(readOnly = true)
-    public List<Note> getAll() {
-        return noteRepo.findAll();
-    }
-
-    public Note getById(Long id) {
-        return noteRepo.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Note not found with ID: " + id));
     }
 
     public List<Note> getByLeadId(Long leadId) {
@@ -38,24 +28,44 @@ public class NoteService {
     }
 
     @Transactional
-    public Note save(Long leadId, Note note) {
+    public Note addNote(Long leadId, String content, User currentUser) {
         Lead lead = leadService.getById(leadId);
-        note.setId(null);
+
+        // ── ownership check ──────────────────────────────────────
+        if (lead.getOwner() == null ||
+                !lead.getOwner().getId().equals(currentUser.getId())) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "You are not the owner of this lead"
+            );
+        }
+
+        Note note = new Note();
+        note.setContent(content);
         note.setLead(lead);
+        note.setCreatedBy(currentUser);
         return noteRepo.save(note);
     }
 
-    public Note update(Long id, Note updatedNote) {
-        Note existing = getById(id);
-        existing.setContent(updatedNote.getContent());
-        return noteRepo.save(existing);
+    @Transactional
+    public void delete(Long noteId, User currentUser) {
+        Note note = noteRepo.findById(noteId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Note not found"));
+
+        // only note creator can delete
+        if (!note.getCreatedBy().getId().equals(currentUser.getId())) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN, "You cannot delete this note");
+        }
+        noteRepo.deleteById(noteId);
     }
 
-    public void delete(Long id) {
-        if (!noteRepo.existsById(id)) {
-            throw new ResponseStatusException(
-                    HttpStatus.NOT_FOUND, "Note not found with ID: " + id);
-        }
-        noteRepo.deleteById(id);
+    public List<Note> getAll()          { return noteRepo.findAll(); }
+
+    public Note getById(Long id) {
+        return noteRepo.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Note not found with ID: " + id));
     }
 }

@@ -1,7 +1,9 @@
 package com.crm.crm_lite.model;
 
 import jakarta.persistence.*;
+import lombok.Getter;
 
+@Getter
 @Entity
 @Table(name = "users")
 public class User {
@@ -10,22 +12,17 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(unique = true, nullable = false)
     private String email;
+
+    @Column(nullable = false)
     private String password;
 
-    public String getEmail() {
-        return email;
-    }
+    public User() {}
 
-    public String getPassword() {
-        return password;
-    }
+    public void setId(Long id)      { this.id = id; }
 
-    public void setEmail(String email) {
-        this.email = email;
-    }
+    public void setEmail(String email)    { this.email = email; }
 
-    public void setPassword(String password) {
-        this.password = password;
-    }
+    public void setPassword(String password)  { this.password = password; }
 }
