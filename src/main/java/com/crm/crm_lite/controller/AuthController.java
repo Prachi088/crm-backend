@@ -10,7 +10,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
-@CrossOrigin("*")
 public class AuthController {
 
     private final AuthService service;
@@ -28,9 +27,7 @@ public class AuthController {
     public ResponseEntity<?> login(@RequestBody AuthRequest req) {
         try {
             String token = service.login(req.email, req.password);
-
             return ResponseEntity.ok(new AuthResponse(token));
-
         } catch (Exception e) {
             return ResponseEntity.status(401).body(
                     Map.of("error", "Invalid email or password")
