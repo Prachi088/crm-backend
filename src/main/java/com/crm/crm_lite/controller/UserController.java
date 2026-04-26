@@ -20,7 +20,6 @@ public class UserController {
         this.userService = userService;
     }
 
-    // Extracts the User set by JwtFilter — identity always from token, never from URL param
     private User currentUser(Authentication auth) {
         if (auth == null || !(auth.getPrincipal() instanceof User)) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Not authenticated");
@@ -28,8 +27,7 @@ public class UserController {
         return (User) auth.getPrincipal();
     }
 
-    // GET /api/users/me — returns current user's profile
-    // Never exposes password
+    // GET /api/users/me — returns current user's profile (never exposes password)
     @GetMapping("/me")
     public ResponseEntity<Map<String, Object>> getMe(Authentication auth) {
         User user = userService.getMe(currentUser(auth));
@@ -39,11 +37,43 @@ public class UserController {
         ));
     }
 
-    // PUT /api/users/me — updates current user's own data only
+    // GET /api/users/{id} — returns any user's public profile (no password, no email)
+    // Any logged-in user can view another user's basic info
+    @GetMapping("/{id}")
+    public ResponseEntity<Map<String, Object>> getUserById(
+            @PathVariable Long id,
+            Authentication auth) {
+        // Must be logged in to view others' profiles
+        if (auth == null || !(auth.getPrincipal() instanceof User)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Not authenticated");
+        }
+        User viewer = (User) auth.getPrincipal();
+        User target = userService.findById(id);
+
+        // If viewing own profile, return full info
+        if (viewer.getId().equals(target.getId())) {
+            return ResponseEntity.ok(Map.of(
+                    "id",    target.getId(),
+                    "email", target.getEmail()
+            ));
+        }
+
+        // For others — return only id and masked name (first part of email)
+        String maskedName = target.getEmail().split("@")[0];
+        return ResponseEntity.ok(Map.of(
+                "id",    target.getId(),
+                "email", target.getEmail(),
+                "name",  maskedName
+        ));
+    }
+
+    // PUT /api/users/me — updates only password (email is immutable)
     @PutMapping("/me")
     public ResponseEntity<Map<String, Object>> updateMe(
             @RequestBody Map<String, String> updates,
             Authentication auth) {
+        // Strip email from updates — email cannot be changed
+        updates.remove("email");
         User updated = userService.updateMe(currentUser(auth), updates);
         return ResponseEntity.ok(Map.of(
                 "id",    updated.getId(),

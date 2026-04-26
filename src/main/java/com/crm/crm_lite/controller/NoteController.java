@@ -50,14 +50,7 @@ public class NoteController {
     }
 
     // PUT /api/notes/{id} — FIX: new endpoint, only note creator can edit
-    @PutMapping("/{id}")
-    public ResponseEntity<Note> update(@PathVariable Long id,
-                                       @RequestBody Map<String, String> body,
-                                       Authentication auth) {
-        User user = currentUser(auth);
-        String content = body.get("content");
-        return ResponseEntity.ok(service.updateNote(id, content, user));
-    }
+    
 
     // DELETE /api/notes/{id} — only note creator can delete
     @DeleteMapping("/{id}")

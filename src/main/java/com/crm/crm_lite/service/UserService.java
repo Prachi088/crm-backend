@@ -12,44 +12,37 @@ import java.util.Map;
 @Service
 public class UserService {
 
-    private final UserRepository userRepo;
+    private final UserRepository repo;
     private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
-    public UserService(UserRepository userRepo) {
-        this.userRepo = userRepo;
+    public UserService(UserRepository repo) {
+        this.repo = repo;
     }
 
-    // Returns the current user — identity always comes from JWT, never from request body
-    public User getMe(User currentUser) {
-        return userRepo.findById(currentUser.getId())
+    public User getMe(User user) {
+        return repo.findById(user.getId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
     }
 
-    // Updates only the current user's own data
-    // Accepts a map so we can update only the fields that are sent
-    public User updateMe(User currentUser, Map<String, String> updates) {
-        User user = userRepo.findById(currentUser.getId())
+    // Find any user by ID (for public profile viewing)
+    public User findById(Long id) {
+        return repo.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+    }
+
+    public User updateMe(User current, Map<String, String> updates) {
+        User user = repo.findById(current.getId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
-        // Update email if provided and not already taken by another user
-        if (updates.containsKey("email")) {
-            String newEmail = updates.get("email").trim().toLowerCase();
-            if (!newEmail.equals(user.getEmail())) {
-                boolean taken = userRepo.findByEmail(newEmail)
-                        .filter(u -> !u.getId().equals(user.getId()))
-                        .isPresent();
-                if (taken) {
-                    throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already in use");
-                }
-                user.setEmail(newEmail);
+        // Only password can be updated — email is immutable
+        String newPassword = updates.get("password");
+        if (newPassword != null && !newPassword.trim().isEmpty()) {
+            if (newPassword.trim().length() < 6) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password must be at least 6 characters");
             }
+            user.setPassword(encoder.encode(newPassword.trim()));
         }
 
-        // Update password if provided
-        if (updates.containsKey("password") && !updates.get("password").isBlank()) {
-            user.setPassword(encoder.encode(updates.get("password")));
-        }
-
-        return userRepo.save(user);
+        return repo.save(user);
     }
 }

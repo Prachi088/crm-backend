@@ -41,26 +41,7 @@ public class NoteService {
     }
 
     // FIX: new method — only note creator can edit their own note
-    @Transactional
-    public Note updateNote(Long noteId, String content, User currentUser) {
-        Note note = noteRepo.findById(noteId)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Note not found"));
-
-        if (!note.getCreatedBy().getId().equals(currentUser.getId())) {
-            throw new ResponseStatusException(
-                    HttpStatus.FORBIDDEN, "You cannot edit this note");
-        }
-
-        if (content == null || content.isBlank()) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST, "Content cannot be empty");
-        }
-
-        note.setContent(content.trim());
-        return noteRepo.save(note);
-    }
-
+     
     // only note creator can delete
     @Transactional
     public void delete(Long noteId, User currentUser) {

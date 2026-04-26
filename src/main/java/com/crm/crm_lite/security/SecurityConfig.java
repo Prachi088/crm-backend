@@ -32,6 +32,7 @@ public class SecurityConfig {
                                 "/api/leads", "/api/leads/**",
                                 "/api/notes/lead/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/chat").permitAll()
+                        // Users/{id} requires authentication (handled in controller)
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
