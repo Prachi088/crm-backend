@@ -25,8 +25,13 @@ public class LeadService {
         this.repo = repo;
     }
 
+    // FIX: User.getRole() returns the unprefixed value ("ADMIN"), not
+    // "ROLE_ADMIN" — that prefix only exists inside getAuthorities() for
+    // Spring Security. This was comparing "ADMIN".equals("ROLE_ADMIN"),
+    // which is always false, so real admins were being treated as regular
+    // users and blocked from editing/deleting leads they didn't own.
     private boolean isAdmin(User user) {
-        return "ROLE_ADMIN".equals(user.getRole());
+        return User.ROLE_ADMIN.equals(user.getRole());
     }
 
     // ── READ — all leads cached (used by analytics + chat) ────────
