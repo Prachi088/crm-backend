@@ -10,6 +10,10 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Map;
 
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
@@ -25,6 +29,20 @@ public class UserController {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Not authenticated");
         }
         return (User) auth.getPrincipal();
+    }
+
+    // GET /api/users — list all users (id, email, role only — never exposes password)
+    // Used by LeadForm to populate the "Assigned Sales Representative" dropdown
+    @GetMapping
+    public ResponseEntity<List<Map<String, Object>>> getAll(Authentication auth) {
+        currentUser(auth); // must be logged in
+        List<Map<String, Object>> users = userService.getAll().stream()
+                .map(u -> Map.<String, Object>of(
+                        "id", u.getId(),
+                        "email", u.getEmail(),
+                        "role", u.getRole()))
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(users);
     }
 
     // GET /api/users/me — returns current user's profile (never exposes password)

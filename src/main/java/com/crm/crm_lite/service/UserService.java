@@ -7,6 +7,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -17,6 +18,11 @@ public class UserService {
 
     public UserService(UserRepository repo) {
         this.repo = repo;
+    }
+
+    // Used by LeadForm to populate the "Assigned Sales Representative" dropdown
+    public List<User> getAll() {
+        return repo.findAll();
     }
 
     public User getMe(User user) {

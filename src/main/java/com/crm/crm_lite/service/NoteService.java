@@ -4,6 +4,7 @@ import com.crm.crm_lite.model.Lead;
 import com.crm.crm_lite.model.Note;
 import com.crm.crm_lite.model.User;
 import com.crm.crm_lite.repository.NoteRepository;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,8 +29,16 @@ public class NoteService {
         return noteRepo.findByLeadId(leadId);
     }
 
-    // FIX: removed ownership check — any logged-in user can add a note to any lead
+    @Transactional(readOnly = true)
+    public List<Note> getByCustomerId(Long customerId) {
+        return noteRepo.findAll().stream()
+                .filter(note -> note.getCustomer() != null && customerId.equals(note.getCustomer().getId()))
+                .toList();
+    }
+
+    // any logged-in user can add a note to any lead
     @Transactional
+    @CacheEvict(value = "leads", key = "'all'")
     public Note addNote(Long leadId, String content, User currentUser) {
         Lead lead = leadService.getById(leadId);
 
@@ -40,16 +49,39 @@ public class NoteService {
         return noteRepo.save(note);
     }
 
-    // FIX: new method — only note creator can edit their own note
-     
-    // only note creator can delete
+    // only note creator can edit their own note
     @Transactional
-    public void delete(Long noteId, User currentUser) {
-        Note note = noteRepo.findById(noteId)
+    @CacheEvict(value = "leads", key = "'all'")
+    public Note update(Long noteId, String content, User currentUser) {
+        Note note = noteRepo.findByIdWithCreatedBy(noteId)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "Note not found"));
 
-        if (!note.getCreatedBy().getId().equals(currentUser.getId())) {
+        if (note.getCreatedBy() == null ||
+                !note.getCreatedBy().getId().equals(currentUser.getId())) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN, "You cannot edit this note");
+        }
+
+        if (content == null || content.isBlank()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "Content cannot be empty");
+        }
+
+        note.setContent(content.trim());
+        return noteRepo.save(note);
+    }
+
+    // only note creator can delete
+    @Transactional
+    @CacheEvict(value = "leads", key = "'all'")
+    public void delete(Long noteId, User currentUser) {
+        Note note = noteRepo.findByIdWithCreatedBy(noteId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Note not found"));
+
+        if (note.getCreatedBy() == null ||
+                !note.getCreatedBy().getId().equals(currentUser.getId())) {
             throw new ResponseStatusException(
                     HttpStatus.FORBIDDEN, "You cannot delete this note");
         }

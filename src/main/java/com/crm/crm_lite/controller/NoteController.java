@@ -49,8 +49,17 @@ public class NoteController {
                 .body(service.addNote(leadId, content, user));
     }
 
-    // PUT /api/notes/{id} — FIX: new endpoint, only note creator can edit
-    
+    // PUT /api/notes/{id} — only note creator can edit
+    @PutMapping("/{id}")
+    public ResponseEntity<Note> update(@PathVariable Long id,
+                                       @RequestBody Map<String, String> body,
+                                       Authentication auth) {
+        String content = body.get("content");
+        if (content == null || content.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Content is required");
+        }
+        return ResponseEntity.ok(service.update(id, content, currentUser(auth)));
+    }
 
     // DELETE /api/notes/{id} — only note creator can delete
     @DeleteMapping("/{id}")

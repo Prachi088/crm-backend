@@ -17,7 +17,7 @@ public class AuthService {
     private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
     public AuthService(UserRepository repo, JwtUtil jwtUtil) {
-        this.repo = repo;
+        this.repo    = repo;
         this.jwtUtil = jwtUtil;
     }
 
@@ -35,8 +35,8 @@ public class AuthService {
         return password.trim();
     }
 
-    public AuthResponse register(String email, String password) {
-        String normalizedEmail = normalizeEmail(email);
+    public AuthResponse register(String email, String password, String role) {
+        String normalizedEmail    = normalizeEmail(email);
         String normalizedPassword = normalizePassword(password);
 
         if (repo.findByEmailIgnoreCase(normalizedEmail).isPresent()) {
@@ -46,14 +46,15 @@ public class AuthService {
         User user = new User();
         user.setEmail(normalizedEmail);
         user.setPassword(encoder.encode(normalizedPassword));
+        user.setRole(role == null || role.isBlank() ? User.ROLE_SALES_REPRESENTATIVE : role);
 
         User saved = repo.save(user);
-        String token = jwtUtil.generateToken(saved.getEmail(), saved.getId());
-        return new AuthResponse(token, saved.getId(), saved.getEmail());
+        String token = jwtUtil.generateToken(saved.getEmail(), saved.getId(), saved.getRole());
+        return new AuthResponse(token, saved.getId(), saved.getEmail(), saved.getRole());
     }
 
     public AuthResponse login(String email, String password) {
-        String normalizedEmail = normalizeEmail(email);
+        String normalizedEmail    = normalizeEmail(email);
         String normalizedPassword = normalizePassword(password);
 
         User user = repo.findByEmailIgnoreCase(normalizedEmail)
@@ -64,7 +65,7 @@ public class AuthService {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid password");
         }
 
-        String token = jwtUtil.generateToken(user.getEmail(), user.getId());
-        return new AuthResponse(token, user.getId(), user.getEmail());
+        String token = jwtUtil.generateToken(user.getEmail(), user.getId(), user.getRole());
+        return new AuthResponse(token, user.getId(), user.getEmail(), user.getRole());
     }
 }

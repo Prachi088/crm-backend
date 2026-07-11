@@ -31,7 +31,7 @@ public class AuthController {
         }
 
         try {
-            AuthResponse res = service.register(req.email, req.password);
+            AuthResponse res = service.register(req.email, req.password, req.role);
             return ResponseEntity.ok(res);
         } catch (ResponseStatusException ex) {
             String message = ex.getReason() != null ? ex.getReason() : "Registration failed";

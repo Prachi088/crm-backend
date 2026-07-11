@@ -25,9 +25,14 @@ public class Note {
     private LocalDateTime createdAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "lead_id", nullable = false)
+    @JoinColumn(name = "lead_id")
     @JsonIgnore
     private Lead lead;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "customer_id")
+    @JsonIgnore
+    private Customer customer;
 
     // who created this note
     @ManyToOne(fetch = FetchType.LAZY)
@@ -45,6 +50,9 @@ public class Note {
     public void setContent(String c)          { this.content = c; }
 
     public void setLead(Lead lead)            { this.lead = lead; }
+
+    public Customer getCustomer() { return customer; }
+    public void setCustomer(Customer customer) { this.customer = customer; }
 
     public void setCreatedBy(User u)          { this.createdBy = u; }
 }
